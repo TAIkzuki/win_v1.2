@@ -1,0 +1,89 @@
+
+*{box-sizing:border-box}
+body{margin:0;background:#fffdf9;color:#3b352d;font-family:Georgia,"Times New Roman",serif}
+.gold-line{height:5px;background:#c9a227}
+main{max-width:900px;margin:40px auto;padding:20px}
+.card{background:white;border:1px solid #e6d5a3;box-shadow:0 8px 30px rgba(90,70,30,.08);padding:40px;border-radius:8px}
+.narrow{max-width:480px;margin:auto}
+.center{text-align:center}
+.invitation{text-align:center;max-width:680px;margin:auto}
+.small{letter-spacing:3px;color:#a78318;font-size:13px}
+h1{font-size:48px;line-height:1.15;font-weight:normal;color:#a78318;margin:20px 0}
+h2{color:#a78318;font-weight:normal;font-size:32px}
+h3{color:#765b12;font-weight:normal}
+.date{font-size:24px;letter-spacing:2px;margin:15px}
+.lead{font-size:22px}
+form{display:flex;flex-direction:column;gap:10px}
+label{margin-top:8px}
+input{padding:12px;border:1px solid #d8c58d;border-radius:5px;font:inherit}
+.button{display:inline-block;margin-top:20px;padding:13px 25px;background:#b6942d;color:white;text-decoration:none;border:0;border-radius:5px;cursor:pointer;font:inherit}
+.choices,.menu-box{display:flex;flex-direction:column;gap:10px;text-align:left}
+.menu-box{border-top:1px solid #eadfbf;padding:15px 0}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.stats div{border:1px solid #eadfbf;padding:15px;text-align:center}
+.stats b{display:block;font-size:25px;color:#a78318}
+.stats span{font-size:12px}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border-bottom:1px solid #eadfbf;padding:12px;text-align:left}
+.admin-head{display:flex;justify-content:space-between;align-items:center}
+.actions{display:flex;gap:5px;flex-wrap:wrap}
+.actions form{display:inline}
+.actions button{border:1px solid #ddd;background:white;padding:5px;cursor:pointer}
+.error{color:#a33}
+.table-wrap{overflow-x:auto}
+@media(max-width:700px){main{margin:10px auto;padding:10px}.card{padding:22px}h1{font-size:38px}.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== Mobile / responsive version ===== */
+html{overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{overflow-x:hidden;min-width:320px}
+img,iframe{max-width:100%}
+iframe{display:block;margin:0 auto}
+button,.button,input{touch-action:manipulation}
+
+@media (max-width: 700px){
+  .gold-line{height:4px}
+  main{width:100%;margin:0 auto;padding:8px}
+  .card{width:100%;padding:18px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(90,70,30,.08)}
+  .invitation{max-width:none}
+  .small{font-size:11px;letter-spacing:1.5px;line-height:1.5}
+  h1{font-size:30px;line-height:1.2;margin:14px 0}
+  h2{font-size:23px;line-height:1.3;margin:14px 0}
+  h3{font-size:18px;line-height:1.35}
+  .date{font-size:19px;line-height:1.35;letter-spacing:1px;margin:12px 0}
+  .lead{font-size:18px;line-height:1.45}
+  p{font-size:16px;line-height:1.55}
+
+  form{gap:8px}
+  label{font-size:16px;line-height:1.45;margin-top:6px;display:flex;align-items:center;gap:8px}
+  input[type="radio"]{width:20px;height:20px;flex:0 0 20px;margin:0}
+  input[type="text"],input[type="number"],input[type="email"],input[type="tel"]{width:100%;font-size:16px;min-height:46px}
+  .choices,.menu-box{gap:8px}
+  .menu-box{padding:13px 0}
+  .button{display:block;width:100%;min-height:48px;padding:13px 16px;margin-top:16px;text-align:center;font-size:17px;border-radius:8px}
+
+  /* Яндекс.Карта на телефоне */
+  iframe{width:100% !important;height:300px !important;border:0}
+
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stats div{padding:11px 6px}
+  .stats b{font-size:21px}
+  .stats span{font-size:11px}
+
+  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{font-size:14px;min-width:600px}
+  th,td{padding:9px 8px}
+  .admin-head{align-items:flex-start;gap:10px;flex-direction:column}
+  .actions{width:100%}
+  .actions form,.actions button{width:100%}
+  .actions button{min-height:42px}
+}
+
+@media (max-width: 380px){
+  main{padding:5px}
+  .card{padding:16px 11px}
+  h1{font-size:27px}
+  h2{font-size:21px}
+  .date{font-size:18px}
+  p,.lead,label{font-size:15px}
+  iframe{height:260px !important}
+}

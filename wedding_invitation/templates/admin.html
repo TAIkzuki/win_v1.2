@@ -1,0 +1,38 @@
+
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+<div class="admin-head"><h2>Админ-панель</h2><a href="{{ url_for('admin_logout') }}">Выйти</a></div>
+<a class="button" href="{{ url_for('add_guest') }}">+ Добавить гостя</a>
+
+<h3>Итоги</h3>
+<div class="stats">
+<div><b>{{ totals.invited }}</b><span>приглашено</span></div>
+<div><b>{{ totals.responded }}</b><span>ответили</span></div>
+<div><b>{{ totals.attending }}</b><span>придут</span></div>
+<div><b>{{ totals.meat }}</b><span>мясо</span></div>
+<div><b>{{ totals.fish }}</b><span>рыба</span></div>
+<div><b>{{ totals.poultry }}</b><span>птица</span></div>
+</div>
+
+<h3>Гости</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Имя</th><th>Приглашено</th><th>Статус</th><th>Ссылка</th><th>Действия</th></tr>
+{% for g in guests %}
+<tr>
+<td>{{ g.name }}</td>
+<td>{{ g.invited_count }}</td>
+<td>{% if g.submitted %}✓ {{ g.attending_count }} придёт{% else %}Ожидаем ответ{% endif %}</td>
+<td><a href="{{ url_for('invite', token=g.token) }}" target="_blank">Открыть</a></td>
+<td class="actions">
+<a href="{{ url_for('review_guest', guest_id=g.id) }}">Ответ</a>
+<form method="post" action="{{ url_for('reset_guest', guest_id=g.id) }}"><button>Сброс</button></form>
+<form method="post" action="{{ url_for('delete_guest', guest_id=g.id) }}" onsubmit="return confirm('Удалить гостя?')"><button>Удалить</button></form>
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+</section>
+{% endblock %}

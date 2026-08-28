@@ -1,0 +1,17 @@
+
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+<h2>Ответ: {{ guest.name }}</h2>
+<p>Придёт: <b>{{ guest.attending_count if guest.submitted else 'нет ответа' }}</b></p>
+{% if choices %}
+<table>
+<tr><th>Гость</th><th>Меню</th></tr>
+{% for c in choices %}
+<tr><td>Гость №{{ c.guest_number }}</td><td>{{ {'meat':'🥩 Мясо','fish':'🐟 Рыба','poultry':'🍗 Птица'}[c.menu] }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+<a href="{{ url_for('admin') }}">← Назад</a>
+</section>
+{% endblock %}

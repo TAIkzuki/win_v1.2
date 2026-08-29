@@ -26,6 +26,7 @@ def init_db():
         invited_count INTEGER NOT NULL DEFAULT 1,
         attending_count INTEGER,
         submitted INTEGER NOT NULL DEFAULT 0,
+        short_fact TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -36,7 +37,19 @@ def init_db():
         menu TEXT NOT NULL,
         FOREIGN KEY (guest_id) REFERENCES guests(id)
     );
+
+    CREATE TABLE IF NOT EXISTS drink_choices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guest_id INTEGER NOT NULL,
+        guest_number INTEGER NOT NULL,
+        drink TEXT NOT NULL,
+        FOREIGN KEY (guest_id) REFERENCES guests(id)
+    );
     """)
+    # Миграция существующей базы: добавляем поле факта, если его ещё нет.
+    columns = [row[1] for row in conn.execute("PRAGMA table_info(guests)").fetchall()]
+    if "short_fact" not in columns:
+        conn.execute("ALTER TABLE guests ADD COLUMN short_fact TEXT")
     conn.commit()
     conn.close()
 
@@ -68,7 +81,14 @@ def invite(token):
             conn.close()
             return redirect(url_for("invite", token=token))
 
+        short_fact = request.form.get("short_fact", "").strip()
+        if len(short_fact) > 500:
+            flash("Краткий факт должен быть не длиннее 500 символов.")
+            conn.close()
+            return redirect(url_for("invite", token=token, edit="1"))
+
         choices = []
+        drinks = []
         if attending:
             for i in range(1, attending + 1):
                 menu = request.form.get(f"menu_{i}")
@@ -78,15 +98,33 @@ def invite(token):
                     return redirect(url_for("invite", token=token))
                 choices.append(menu)
 
+                guest_drinks = request.form.getlist(f"drink_{i}")
+                allowed_drinks = {"champagne", "white_wine", "red_wine", "cognac", "whisky", "tinctures", "non_alcoholic", "anything_burning", "no_alcohol"}
+                if not guest_drinks or any(d not in allowed_drinks for d in guest_drinks):
+                    flash("Пожалуйста, выберите предпочтения по напиткам для каждого гостя.")
+                    conn.close()
+                    return redirect(url_for("invite", token=token))
+                if "no_alcohol" in guest_drinks and len(guest_drinks) > 1:
+                    flash("Для варианта «Не планирую пить алкоголь» выберите только его.")
+                    conn.close()
+                    return redirect(url_for("invite", token=token))
+                drinks.extend((i, d) for d in guest_drinks)
+
         conn.execute("DELETE FROM menu_choices WHERE guest_id=?", (guest["id"],))
         for i, menu in enumerate(choices, 1):
             conn.execute(
                 "INSERT INTO menu_choices (guest_id, guest_number, menu) VALUES (?, ?, ?)",
                 (guest["id"], i, menu)
             )
+        conn.execute("DELETE FROM drink_choices WHERE guest_id=?", (guest["id"],))
+        for guest_number, drink in drinks:
+            conn.execute(
+                "INSERT INTO drink_choices (guest_id, guest_number, drink) VALUES (?, ?, ?)",
+                (guest["id"], guest_number, drink)
+            )
         conn.execute(
-            "UPDATE guests SET attending_count=?, submitted=1 WHERE id=?",
-            (attending, guest["id"])
+            "UPDATE guests SET attending_count=?, short_fact=?, submitted=1 WHERE id=?",
+            (attending, short_fact, guest["id"])
         )
         conn.commit()
 
@@ -95,11 +133,19 @@ def invite(token):
             "SELECT * FROM menu_choices WHERE guest_id=? ORDER BY guest_number",
             (guest["id"],)
         ).fetchall()
+        drinks = conn.execute(
+            "SELECT * FROM drink_choices WHERE guest_id=? ORDER BY guest_number, id",
+            (guest["id"],)
+        ).fetchall()
         conn.close()
-        return render_template("thanks.html", guest=guest, choices=choices)
+        return render_template("thanks.html", guest=guest, choices=choices, drinks=drinks)
 
     choices = conn.execute(
         "SELECT * FROM menu_choices WHERE guest_id=? ORDER BY guest_number",
+        (guest["id"],)
+    ).fetchall()
+    drinks = conn.execute(
+        "SELECT * FROM drink_choices WHERE guest_id=? ORDER BY guest_number, id",
         (guest["id"],)
     ).fetchall()
     conn.close()
@@ -108,9 +154,9 @@ def invite(token):
     # показываем сохранённый результат. Для повторного прохождения
     # используется параметр ?edit=1.
     if guest["submitted"] and request.args.get("edit") != "1":
-        return render_template("thanks.html", guest=guest, choices=choices)
+        return render_template("thanks.html", guest=guest, choices=choices, drinks=drinks)
 
-    return render_template("invite.html", guest=guest, choices=choices)
+    return render_template("invite.html", guest=guest, choices=choices, drinks=drinks)
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -139,6 +185,15 @@ def admin():
         "meat": conn.execute("SELECT COUNT(*) FROM menu_choices WHERE menu='meat'").fetchone()[0],
         "fish": conn.execute("SELECT COUNT(*) FROM menu_choices WHERE menu='fish'").fetchone()[0],
         "poultry": conn.execute("SELECT COUNT(*) FROM menu_choices WHERE menu='poultry'").fetchone()[0],
+        "champagne": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='champagne'").fetchone()[0],
+        "white_wine": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='white_wine'").fetchone()[0],
+        "red_wine": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='red_wine'").fetchone()[0],
+        "cognac": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='cognac'").fetchone()[0],
+        "whisky": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='whisky'").fetchone()[0],
+        "tinctures": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='tinctures'").fetchone()[0],
+        "non_alcoholic": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='non_alcoholic'").fetchone()[0],
+        "anything_burning": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='anything_burning'").fetchone()[0],
+        "no_alcohol": conn.execute("SELECT COUNT(*) FROM drink_choices WHERE drink='no_alcohol'").fetchone()[0],
     }
     conn.close()
     return render_template("admin.html", guests=guests, totals=totals)
@@ -176,6 +231,7 @@ def delete_guest(guest_id):
     if r: return r
     conn = get_db()
     conn.execute("DELETE FROM menu_choices WHERE guest_id=?", (guest_id,))
+    conn.execute("DELETE FROM drink_choices WHERE guest_id=?", (guest_id,))
     conn.execute("DELETE FROM guests WHERE id=?", (guest_id,))
     conn.commit()
     conn.close()
@@ -187,6 +243,7 @@ def reset_guest(guest_id):
     if r: return r
     conn = get_db()
     conn.execute("DELETE FROM menu_choices WHERE guest_id=?", (guest_id,))
+    conn.execute("DELETE FROM drink_choices WHERE guest_id=?", (guest_id,))
     conn.execute("UPDATE guests SET attending_count=NULL, submitted=0 WHERE id=?", (guest_id,))
     conn.commit()
     conn.close()
@@ -199,9 +256,10 @@ def review_guest(guest_id):
     conn = get_db()
     guest = conn.execute("SELECT * FROM guests WHERE id=?", (guest_id,)).fetchone()
     choices = conn.execute("SELECT * FROM menu_choices WHERE guest_id=? ORDER BY guest_number", (guest_id,)).fetchall()
+    drinks = conn.execute("SELECT * FROM drink_choices WHERE guest_id=? ORDER BY guest_number, id", (guest_id,)).fetchall()
     conn.close()
     if not guest: abort(404)
-    return render_template("review.html", guest=guest, choices=choices)
+    return render_template("review.html", guest=guest, choices=choices, drinks=drinks)
 
 init_db()
 

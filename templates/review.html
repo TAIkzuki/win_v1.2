@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="kicker">♡ ответ гостя ♡</div>
+  <h2>{{ guest.name }} 💌</h2>
+  <p>Придёт: <b>{{ guest.attending_count if guest.submitted else 'нет ответа' }}</b></p>
+  {% if choices %}
+  <table>
+    <tr><th>Гость</th><th>Меню</th></tr>
+    {% for c in choices %}
+    <tr><td>Гость №{{ c.guest_number }}</td><td>{{ {'meat':'🥩 Мясо','fish':'🐟 Рыба','poultry':'🍗 Птица'}[c.menu] }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if drinks %}
+  <div class="menu-box">
+    <h3>Напитки 🥂</h3>
+    {% for d in drinks %}
+      <p>Гость №{{ d.guest_number }}: <b>{{ {'champagne':'🥂 Шампанское','white_wine':'🍾 Белое вино','red_wine':'🍷 Красное вино','cognac':'🥃 Коньяк','whisky':'🥃 Виски','tinctures':'🍸 Настойки','non_alcoholic':'🧃 Безалкогольные напитки','anything_burning':'🔥 Всё, что горит','no_alcohol':'🚫 Не планирую пить алкоголь'}[d.drink] }}</b></p>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if guest.short_fact %}
+  <div class="menu-box"><h3>Краткий факт о себе ✨</h3><p>{{ guest.short_fact }}</p></div>
+  {% endif %}
+  <a href="{{ url_for('admin') }}">← Назад</a>
+</section>
+{% endblock %}

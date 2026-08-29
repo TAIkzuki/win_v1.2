@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card invitation">
+  <div class="kicker">♡ мы женимся ♡</div>
+  <img class="hero-hearts" src="{{ url_for('static', filename='hearts.svg') }}" alt="">
+  <div class="small">ДОРОГОЙ(АЯ), {{ guest.name.upper() }}!</div>
+  <h1>Будем очень рады видеть тебя 🤍</h1>
+  <div class="date">25 сентября 2026 · 13:00</div>
+
+  <p class="lead">Мы скажем друг другу «да», а потом будем разговаривать, смеяться, вкусно есть, танцевать и просто радоваться тому, что рядом наши любимые люди 🥂✨</p>
+
+  <div class="heart-divider">♡</div>
+
+  <h2>Дворец Бракосочетания «Шепиловский»</h2>
+  <p>Набережная Москвы-реки</p>
+  <div class="map">
+    <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A4ea533602f2bf96c20e9d7ce63c3a690da0511254b4ab885aad4312bc51e4fd0&amp;source=constructor" width="500" height="400" frameborder="0"></iframe>
+  </div>
+
+  <form method="post" id="inviteForm">
+    <div class="stepper" aria-label="Шаги анкеты">
+      <span class="step active" data-step="1">1</span><span class="step-line"></span>
+      <span class="step" data-step="2">2</span><span class="step-line"></span>
+      <span class="step" data-step="3">3</span><span class="step-line"></span>
+      <span class="step" data-step="4">4</span>
+    </div>
+
+    <div class="form-step active" data-form-step="1">
+      <h2>Ты сможешь прийти?</h2>
+      <p class="small">Очень надеемся на «да»! Но в любом случае нам важно знать твой ответ.</p>
+      <div class="choices">
+      {% for n in range(1, guest.invited_count + 1) %}
+        <label class="choice-card"><input type="radio" name="attending_count" value="{{ n }}" {% if guest.attending_count == n %}checked{% endif %}> <span>{{ n }} {{ 'Да' if n == 1 else 'нас будет' }} 💕</span></label>
+      {% endfor %}
+        <label class="choice-card"><input type="radio" name="attending_count" value="0" {% if guest.attending_count == 0 %}checked{% endif %}> <span>К сожалению, не смогу 🥺</span></label>
+      </div>
+      <button class="button full" type="button" data-next="2">Дальше →</button>
+    </div>
+
+    <div class="form-step" data-form-step="2">
+      <h2>Выбираем вкусное 🍽️</h2>
+      <p class="small">Если ты придёшь, выбери блюдо для каждого гостя.</p>
+      <div id="menus"></div>
+      <div class="actions-nav">
+        <button class="button secondary" type="button" data-prev="1">← Назад</button>
+        <button class="button" type="button" data-next="3">Дальше →</button>
+      </div>
+    </div>
+
+    <div class="form-step" data-form-step="3">
+      <h2>А какие напитки вы предпочитаете? 🥂</h2>
+      <p class="small">Можно выбрать несколько вариантов для каждого гостя.</p>
+      <div id="drinks"></div>
+      <div class="actions-nav">
+        <button class="button secondary" type="button" data-prev="2">← Назад</button>
+        <button class="button" type="button" data-next="4">Дальше →</button>
+      </div>
+    </div>
+
+    <div class="form-step" data-form-step="4">
+      <h2>И ещё одна маленькая просьба 💌</h2>
+      <div class="menu-box fact-box">
+        <h3>Расскажи о себе что-нибудь интересное</h3>
+        <p class="small">Если ты придёшь с партнёром, то пусть он тоже о себе напишет интересный факт✨</p>
+        <textarea name="short_fact" maxlength="500" rows="5" placeholder="Например: умею жонглировать тремя предметами...а жена мной">{{ guest.short_fact or '' }}</textarea>
+      </div>
+      <div class="actions-nav">
+        <button class="button secondary" type="button" data-prev="3">← Назад</button>
+        <button class="button" type="submit">Сохранить ответ 💗</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<script>
+const form = document.getElementById('inviteForm');
+const menus = document.getElementById('menus');
+const drinks = document.getElementById('drinks');
+const old = {{ choices|map(attribute='menu')|list|tojson }};
+const oldDrinks = {};
+{% for d in drinks %}if(!oldDrinks[{{ d.guest_number }}]) oldDrinks[{{ d.guest_number }}]=[]; oldDrinks[{{ d.guest_number }}].push('{{ d.drink }}');{% endfor %}
+const steps = [...document.querySelectorAll('[data-form-step]')];
+const dots = [...document.querySelectorAll('.stepper .step')];
+
+function selectedCount(){
+  const radio = form.querySelector('input[name="attending_count"]:checked');
+  return radio ? Number(radio.value) : 0;
+}
+function renderMenus(){
+  const count = selectedCount();
+  menus.innerHTML = '';
+  if(!count){
+    menus.innerHTML = '<div class="info-box">💗 Ты выбрал(а), что не сможешь прийти — меню заполнять не нужно. Нажми «Дальше».</div>';
+    return;
+  }
+  const names=['первого гостя','второго гостя','третьего гостя','четвёртого гостя','пятого гостя','шестого гостя','седьмого гостя','восьмого гостя'];
+  for(let i=1;i<=count;i++){
+    const selected=old[i-1] || '';
+    menus.insertAdjacentHTML('beforeend', `
+      <div class="menu-box">
+        <h3>Меню для ${names[i-1] || (i+'-го гостя')} 💕</h3>
+        <label class="choice-card"><input type="radio" name="menu_${i}" value="meat" ${selected==='meat'?'checked':''}> <span>🥩 Мясо</span></label>
+        <label class="choice-card"><input type="radio" name="menu_${i}" value="fish" ${selected==='fish'?'checked':''}> <span>🐟 Рыба</span></label>
+        <label class="choice-card"><input type="radio" name="menu_${i}" value="poultry" ${selected==='poultry'?'checked':''}> <span>🍗 Птица</span></label>
+      </div>`);
+  }
+}
+
+function renderDrinks(){
+  const count = selectedCount();
+  drinks.innerHTML = '';
+  if(!count){
+    drinks.innerHTML = '<div class="info-box">💗 Ты выбрал(а), что не сможешь прийти — напитки выбирать не нужно. Нажми «Дальше».</div>';
+    return;
+  }
+  const names=['первого гостя','второго гостя','третьего гостя','четвёртого гостя','пятого гостя','шестого гостя','седьмого гостя','восьмого гостя'];
+  const options=[
+    ['champagne','🥂 Шампанское'],
+    ['white_wine','🍾 Белое вино'],
+    ['red_wine','🍷 Красное вино'],
+    ['cognac','🥃 Коньяк'],
+    ['whisky','🥃 Виски'],
+    ['tinctures','🍸 Настойки'],
+    ['non_alcoholic','🧃 Безалкогольные напитки'],
+    ['anything_burning','🔥 Всё, что горит'],
+    ['no_alcohol','🚫 Не планирую пить алкоголь']
+  ];
+  for(let i=1;i<=count;i++){
+    const selected=oldDrinks[i] || [];
+    const box=document.createElement('div');
+    box.className='menu-box';
+    box.innerHTML=`<h3>Напитки для ${names[i-1] || (i+'-го гостя')} 💕</h3>`;
+    options.forEach(([value,label])=>{
+      const checked=selected.includes(value);
+      box.insertAdjacentHTML('beforeend', `<label class="choice-card"><input type="checkbox" name="drink_${i}" value="${value}" ${checked?'checked':''}> <span>${label}</span></label>`);
+    });
+    drinks.appendChild(box);
+  }
+  drinks.querySelectorAll('input[value="no_alcohol"]').forEach(cb=>cb.addEventListener('change',()=>{
+    if(cb.checked){
+      cb.closest('.menu-box').querySelectorAll('input[type="checkbox"]').forEach(x=>{if(x!==cb)x.checked=false;});
+    }
+  }));
+  drinks.querySelectorAll('.menu-box').forEach(box=>{
+    box.querySelectorAll('input[type="checkbox"]:not([value="no_alcohol"])').forEach(cb=>cb.addEventListener('change',()=>{
+      if(cb.checked){ const no=box.querySelector('input[value="no_alcohol"]'); if(no) no.checked=false; }
+    }));
+  });
+}
+function showStep(n){
+  steps.forEach(s=>s.classList.toggle('active', Number(s.dataset.formStep)===n));
+  dots.forEach(d=>d.classList.toggle('active', Number(d.dataset.step)<=n));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+form.querySelectorAll('input[name="attending_count"]').forEach(x=>x.addEventListener('change',()=>{ renderMenus(); renderDrinks(); }));
+form.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{
+  const next=Number(b.dataset.next);
+  if(next===2 && !form.querySelector('input[name="attending_count"]:checked')){
+    alert('Выбери, пожалуйста, сможешь ли ты прийти 💗');
+    return;
+  }
+  if(next===3 && selectedCount()>0){
+    for(let i=1;i<=selectedCount();i++){
+      if(!form.querySelector(`input[name="menu_${i}"]:checked`)){
+        alert('Выбери, пожалуйста, блюдо для каждого гостя 🍽️');
+        return;
+      }
+    }
+  }
+  if(next===4 && selectedCount()>0){
+    for(let i=1;i<=selectedCount();i++){
+      if(!form.querySelector(`input[name="drink_${i}"]:checked`)){
+        alert('Выбери, пожалуйста, напитки для каждого гостя 🥂');
+        return;
+      }
+    }
+  }
+  showStep(next);
+}));
+form.querySelectorAll('[data-prev]').forEach(b=>b.addEventListener('click',()=>showStep(Number(b.dataset.prev))));
+renderMenus();
+renderDrinks();
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card narrow center">
+  <div class="kicker">♡ только для молодожёнов ♡</div>
+  <h2>Админ-панель</h2>
+  <p>Здесь можно создавать приглашения и смотреть ответы гостей 🔐</p>
+  <form method="post">
+    <label style="text-align:left">Пароль</label>
+    <input type="password" name="password" autofocus required>
+    <button class="button full" type="submit">Войти ✨</button>
+  </form>
+  {% for msg in get_flashed_messages() %}<p class="error">{{ msg }}</p>{% endfor %}
+</section>
+{% endblock %}

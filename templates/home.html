@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card center">
+  <div class="kicker">♡ свадебное приглашение ♡</div>
+  <img class="hero-hearts" src="{{ url_for('static', filename='hearts.svg') }}" alt="">
+  <h1>Алексей &amp; Анастасия</h1>
+  <div class="heart-divider">♡</div>
+  <div class="date">25 сентября 2026 года</div>
+  <p class="lead">Мы очень хотим провести этот день вместе с вами 🤍</p>
+  <p>Сохраняйте дату — впереди любовь, смех, вкусный ужин, танцы и много-много объятий 🥰</p>
+  <div class="info-box">✨ Для каждого гостя приглашение и анкета открываются по индивидуальной ссылке.</div>
+  <a class="button" href="{{ url_for('admin_login') }}">Войти в админ-панель</a>
+  <div class="footer-note">С любовью, А&amp;А ♡</div>
+</section>
+{% endblock %}
